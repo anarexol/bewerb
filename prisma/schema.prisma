@@ -1,0 +1,84 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  provider  String   // "google" or "microsoft"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Interview data
+  applications Application[]
+
+  @@map("users")
+}
+
+model Application {
+  id        String   @id @default(cuid())
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Job details
+  jobTitle       String
+  jobDescription String @db.Text
+  company        String?
+
+  // User inputs
+  cv                String  @db.Text
+  certificates      String? @db.Text
+  aboutMe           String? @db.Text
+  whyThisJob        String? @db.Text
+  fears             String? @db.Text
+  suitabilityRating Int?    // 1-10 scale
+
+  // Interview session
+  interviews Interview[]
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("applications")
+}
+
+model Interview {
+  id            String   @id @default(cuid())
+  applicationId String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Interview data
+  status        String   @default("pending") // "pending", "in_progress", "completed"
+  conversation  String    // Store conversation history
+  duration      Int?     // Duration in seconds
+  rating        Int?     // Interview performance rating
+
+  // Relations
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@map("interviews")
+}
+
+model InterviewMessage {
+  id          String   @id @default(cuid())
+  interviewId String
+  createdAt   DateTime @default(now())
+
+  // Message data
+  role    String // "user" or "assistant"
+  content String @db.Text
+  audioUrl String? // URL to stored audio file
+
+  @@map("interview_messages")
+}
